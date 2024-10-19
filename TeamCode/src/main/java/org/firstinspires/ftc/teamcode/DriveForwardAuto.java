@@ -49,8 +49,8 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Cyberhazards", group = "Iterative OpMode")
-public class TeleOp extends OpMode {
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "ForwardDrive", group = "Iterative OpMode")
+public class DriveForwardAuto extends OpMode {
     // Declare OpMode members.
 
     private DcMotor frontLeft = null;
@@ -98,7 +98,15 @@ public class TeleOp extends OpMode {
      */
     @Override
     public void start() {
+        drive(0, .5, 0);
 
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        stop();
     }
 
     /*
@@ -106,17 +114,10 @@ public class TeleOp extends OpMode {
      */
     @Override
     public void loop() {
-        double x = gamepad1.left_stick_x;
-        double y = gamepad1.left_stick_y;
-        double z = gamepad1.right_stick_x;
 
-        if (gamepad1.right_bumper) {
-            x = x * 0.3;
-            y = y * 0.3;
-            z = z * 0.3;
-        }
+    }
 
-
+    private void drive(double x, double y, double z) {
         frontLeft.setPower(y - x - z);
         frontRight.setPower(y + x + z);
         backLeft.setPower(y + x - z);
