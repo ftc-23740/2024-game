@@ -31,7 +31,10 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -58,6 +61,11 @@ public class TeleOp extends OpMode {
     private DcMotor backLeft = null;
     private DcMotor backRight = null;
 
+    private DcMotor viperSlide = null;
+
+    private CRServoImplEx roller = null;
+    private ServoImplEx wrist = null;
+
     /*
      * Code to run ONCE when the driver hits INIT
      */
@@ -73,6 +81,11 @@ public class TeleOp extends OpMode {
         backLeft = hardwareMap.get(DcMotor.class, "back_left");
         backRight = hardwareMap.get(DcMotor.class, "back_right");
 
+        viperSlide = hardwareMap.get(DcMotor.class, "viperSlide");
+
+        roller = hardwareMap.get(CRServoImplEx.class, "roller");
+        wrist = hardwareMap.get(ServoImplEx.class, "wrist");
+
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
@@ -80,6 +93,10 @@ public class TeleOp extends OpMode {
         frontRight.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.FORWARD);
         backRight.setDirection(DcMotor.Direction.FORWARD);
+
+        roller.setDirection(DcMotorSimple.Direction.FORWARD);
+
+        viperSlide.setDirection(DcMotor.Direction.FORWARD);
 
 
         // Tell the driver that initialization is complete.
@@ -122,6 +139,40 @@ public class TeleOp extends OpMode {
         backLeft.setPower(y + x - z);
         backRight.setPower(y - x + z);
 
+        if (gamepad2.a) {
+            roller.setPower(1);
+        } else if (gamepad2.b) {
+            roller.setPower(-1);
+        } else {
+            roller.setPower(0);
+        }
+
+
+        if (gamepad2.dpad_up) {
+            wrist.setPosition(0.5);
+        }
+
+        if (gamepad2.dpad_left) {
+            wrist.setPosition(0.75);
+        }
+
+        if (gamepad2.dpad_right) {
+            wrist.setPosition(0.75);
+        }
+
+        if(gamepad2.right_trigger > 0.2) {
+            viperSlide.setTargetPosition(0);
+
+        }
+
+        if(gamepad2.left_trigger > 0.2) {
+            viperSlide.setTargetPosition(0);
+
+        }
+
+        if(gamepad2.right_stick_y > 0) {
+            viperSlide.setTargetPosition(0);
+        }
 
     }
 
@@ -134,6 +185,7 @@ public class TeleOp extends OpMode {
         frontRight.setPower(0);
         backLeft.setPower(0);
         backRight.setPower(0);
+        viperSlide.setPower(0);
     }
 
 }
