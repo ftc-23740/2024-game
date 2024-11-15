@@ -29,14 +29,11 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 /*
  * This file contains an example of an iterative (Non-Linear) "OpMode".
@@ -62,6 +59,7 @@ public class TeleOp extends OpMode {
     private DcMotor backRight = null;
 
     private DcMotor viperSlide = null;
+    private DcMotor elbow = null;
 
     private CRServoImplEx roller = null;
     private ServoImplEx wrist = null;
@@ -81,7 +79,8 @@ public class TeleOp extends OpMode {
         backLeft = hardwareMap.get(DcMotor.class, "back_left");
         backRight = hardwareMap.get(DcMotor.class, "back_right");
 
-        viperSlide = hardwareMap.get(DcMotor.class, "viperSlide");
+        viperSlide = hardwareMap.get(DcMotor.class, "viper_slide");
+        elbow = hardwareMap.get(DcMotor.class, "elbow");
 
         roller = hardwareMap.get(CRServoImplEx.class, "roller");
         wrist = hardwareMap.get(ServoImplEx.class, "wrist");
@@ -97,6 +96,11 @@ public class TeleOp extends OpMode {
         roller.setDirection(DcMotorSimple.Direction.FORWARD);
 
         viperSlide.setDirection(DcMotor.Direction.FORWARD);
+        elbow.setDirection(DcMotor.Direction.FORWARD);
+
+        elbow.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        elbow.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 
         // Tell the driver that initialization is complete.
@@ -108,6 +112,7 @@ public class TeleOp extends OpMode {
      */
     @Override
     public void init_loop() {
+        telemetry.addData("encoder", elbow.getCurrentPosition());
     }
 
     /*
@@ -123,6 +128,9 @@ public class TeleOp extends OpMode {
      */
     @Override
     public void loop() {
+        telemetry.addData("encoder", elbow.getCurrentPosition());
+        telemetry.addData("setpoint", elbow.getTargetPosition());
+
         double x = gamepad1.left_stick_x;
         double y = gamepad1.left_stick_y;
         double z = gamepad1.right_stick_x;
@@ -157,22 +165,42 @@ public class TeleOp extends OpMode {
         }
 
         if (gamepad2.dpad_right) {
-            wrist.setPosition(0.75);
+            wrist.setPosition(0.25);
         }
 
-        if(gamepad2.right_trigger > 0.2) {
-            viperSlide.setTargetPosition(0);
+//        if(gamepad2.right_trigger > 0.2) {
+//            viperSlide.setTargetPosition(0);
+//
+//        }
+//
+//        if(gamepad2.left_trigger > 0.2) {
+//            viperSlide.setTargetPosition(0);
+//
+//        }
+//
+//        if(gamepad2.right_stick_y > 0) {
+//            viperSlide.setTargetPosition(0);
+//        }
 
+        viperSlide.setPower(gamepad2.right_stick_y);
+        // elbow.setPower(gamepad2.left_stick_y);
+
+        if (gamepad2.x) {
+            elbow.setTargetPosition(240);
+            elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            elbow.setPower(0.3);
         }
 
-        if(gamepad2.left_trigger > 0.2) {
-            viperSlide.setTargetPosition(0);
-
+        if (gamepad2.y) {
+            elbow.setTargetPosition(0);
+            elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            elbow.setPower(0.3);
         }
 
-        if(gamepad2.right_stick_y > 0) {
-            viperSlide.setTargetPosition(0);
+        if (Math.abs(gamepad2.left_stick_y) > 0.25) {
+            elbow.setTargetPosition(elbow.getTargetPosition() + Math.round(Math.signum(gamepad2.left_stick_y)));
         }
+
 
     }
 
