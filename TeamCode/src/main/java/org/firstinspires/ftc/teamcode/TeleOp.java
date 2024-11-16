@@ -32,7 +32,9 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 /*
@@ -58,11 +60,15 @@ public class TeleOp extends OpMode {
     private DcMotor backLeft = null;
     private DcMotor backRight = null;
 
-    private DcMotor viperSlide = null;
-    private DcMotor elbow = null;
+    private DcMotorEx viperSlide = null;
+    private DcMotorEx elbow = null;
 
     private CRServoImplEx roller = null;
     private ServoImplEx wrist = null;
+
+
+    private final int ELBOW_STRAIGHT_UP = 392;
+    private final int ELBOW_STRAIGHT_OUT = 1130;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -79,8 +85,8 @@ public class TeleOp extends OpMode {
         backLeft = hardwareMap.get(DcMotor.class, "back_left");
         backRight = hardwareMap.get(DcMotor.class, "back_right");
 
-        viperSlide = hardwareMap.get(DcMotor.class, "viper_slide");
-        elbow = hardwareMap.get(DcMotor.class, "elbow");
+        viperSlide = hardwareMap.get(DcMotorEx.class, "viper_slide");
+        elbow = hardwareMap.get(DcMotorEx.class, "elbow");
 
         roller = hardwareMap.get(CRServoImplEx.class, "roller");
         wrist = hardwareMap.get(ServoImplEx.class, "wrist");
@@ -98,10 +104,24 @@ public class TeleOp extends OpMode {
         viperSlide.setDirection(DcMotor.Direction.FORWARD);
         elbow.setDirection(DcMotor.Direction.FORWARD);
 
+        viperSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         elbow.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         elbow.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        PIDFCoefficients C = elbow.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+        telemetry.addData("P", C.p);
+        telemetry.addData("I", C.i);
+        telemetry.addData("D", C.d);
+        telemetry.addData("F", C.f);
+
+        C.p = 12;
+        C.i = 3;
+        C.d = 2;
+        C.f = 0;
+
+        elbow.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, C);
 
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
@@ -120,7 +140,10 @@ public class TeleOp extends OpMode {
      */
     @Override
     public void start() {
-
+        elbow.setTargetPosition(ELBOW_STRAIGHT_UP);
+        elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        elbow.setPower(0.5);
+        wrist.setPosition(0.5);
     }
 
     /*
@@ -182,23 +205,23 @@ public class TeleOp extends OpMode {
 //            viperSlide.setTargetPosition(0);
 //        }
 
-        viperSlide.setPower(gamepad2.right_stick_y);
+        viperSlide.setPower(gamepad2.left_stick_y);
         // elbow.setPower(gamepad2.left_stick_y);
 
         if (gamepad2.x) {
-            elbow.setTargetPosition(240);
+            elbow.setTargetPosition(ELBOW_STRAIGHT_OUT);
             elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            elbow.setPower(0.3);
+            elbow.setPower(0.5);
         }
 
         if (gamepad2.y) {
-            elbow.setTargetPosition(0);
+            elbow.setTargetPosition(ELBOW_STRAIGHT_UP);
             elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            elbow.setPower(0.3);
+            elbow.setPower(0.5);
         }
 
-        if (Math.abs(gamepad2.left_stick_y) > 0.25) {
-            elbow.setTargetPosition(elbow.getTargetPosition() + Math.round(Math.signum(gamepad2.left_stick_y)));
+        if (Math.abs(gamepad2.right_stick_y) > 0.25) {
+            elbow.setTargetPosition(elbow.getTargetPosition() + 5 * Math.round(Math.signum(gamepad2.right_stick_y)));
         }
 
 
