@@ -67,8 +67,8 @@ public class TeleOp extends OpMode {
     private ServoImplEx wrist = null;
 
 
-    private final int ELBOW_STRAIGHT_UP = 392;
-    private final int ELBOW_STRAIGHT_OUT = 1130;
+    private final int ELBOW_STRAIGHT_UP = 706;
+    private final int ELBOW_STRAIGHT_OUT = 2090;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -142,7 +142,7 @@ public class TeleOp extends OpMode {
     public void start() {
         elbow.setTargetPosition(ELBOW_STRAIGHT_UP);
         elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        elbow.setPower(0.5);
+        elbow.setPower(0.75);
         wrist.setPosition(0.5);
     }
 
@@ -211,13 +211,13 @@ public class TeleOp extends OpMode {
         if (gamepad2.x) {
             elbow.setTargetPosition(ELBOW_STRAIGHT_OUT);
             elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            elbow.setPower(0.5);
+            elbow.setPower(0.75);
         }
 
         if (gamepad2.y) {
             elbow.setTargetPosition(ELBOW_STRAIGHT_UP);
             elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            elbow.setPower(0.5);
+            elbow.setPower(0.75);
         }
 
         if (Math.abs(gamepad2.right_stick_y) > 0.25) {
