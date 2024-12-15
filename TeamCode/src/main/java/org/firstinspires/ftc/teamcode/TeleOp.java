@@ -173,8 +173,8 @@ public class TeleOp extends OpMode {
         backRight.setPower(y - x + z);
 
         if (gamepad2.left_bumper || gamepad2.right_bumper) {
-            roller.setPower(-1);
-            roller2.setPower(1);
+            roller.setPower(-.3);
+            roller2.setPower(.2);
         } else if (gamepad2.left_trigger > .5 || gamepad2.right_trigger > .5) {
             roller.setPower(1);
             roller2.setPower(-1);
