@@ -37,6 +37,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+
 /*
  * This file contains an example of an iterative (Non-Linear) "OpMode".
  * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
@@ -70,6 +72,10 @@ public class TeleOp extends OpMode {
 
     private final int ELBOW_STRAIGHT_UP = 706;
     private final int ELBOW_STRAIGHT_OUT = 2090;
+
+    private int lastElbowPosition = 0;
+    private int loopsWithoutElbowMovement = 0;
+    private boolean elbowDisabled = false;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -124,6 +130,8 @@ public class TeleOp extends OpMode {
         C.f = 0;
 
         elbow.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, C);
+
+        lastElbowPosition = elbow.getCurrentPosition();
 
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
@@ -213,23 +221,40 @@ public class TeleOp extends OpMode {
         viperSlide.setPower(gamepad2.left_stick_y);
         // elbow.setPower(gamepad2.left_stick_y);
 
-        if (gamepad2.x) {
-            elbow.setTargetPosition(ELBOW_STRAIGHT_OUT);
-            elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            elbow.setPower(0.75);
+        if (!elbowDisabled) {
+            if (gamepad2.x) {
+                elbow.setTargetPosition(ELBOW_STRAIGHT_OUT);
+                elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                elbow.setPower(0.75);
+            }
+
+            if (gamepad2.y) {
+                elbow.setTargetPosition(ELBOW_STRAIGHT_UP);
+                elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                elbow.setPower(0.75);
+            }
+
+            if (Math.abs(gamepad2.right_stick_y) > 0.25) {
+                elbow.setTargetPosition(elbow.getTargetPosition() + 5 * Math.round(Math.signum(gamepad2.right_stick_y)));
+            }
+
+            if (Math.abs(elbow.getCurrent(CurrentUnit.MILLIAMPS)) > 50) {
+                if (Math.abs(lastElbowPosition - elbow.getCurrentPosition()) < 1) {
+                    loopsWithoutElbowMovement++;
+                } else {
+                    loopsWithoutElbowMovement = 0;
+                }
+            }
         }
 
-        if (gamepad2.y) {
-            elbow.setTargetPosition(ELBOW_STRAIGHT_UP);
-            elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            elbow.setPower(0.75);
+        if (loopsWithoutElbowMovement > 10) {
+            elbow.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            elbow.setPower(0);
+            elbowDisabled = true;
+            telemetry.addData("ELBOW DISABLED", "ELBOW DISABLED");
         }
 
-        if (Math.abs(gamepad2.right_stick_y) > 0.25) {
-            elbow.setTargetPosition(elbow.getTargetPosition() + 5 * Math.round(Math.signum(gamepad2.right_stick_y)));
-        }
-
-
+        telemetry.addData("Current", elbow.getCurrent(CurrentUnit.MILLIAMPS));
     }
 
     /*
