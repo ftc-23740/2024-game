@@ -238,11 +238,12 @@ public class TeleOp extends OpMode {
                 elbow.setTargetPosition(elbow.getTargetPosition() + 5 * Math.round(Math.signum(gamepad2.right_stick_y)));
             }
 
-            if (Math.abs(elbow.getCurrent(CurrentUnit.MILLIAMPS)) > 50) {
+            if (Math.abs(elbow.getCurrent(CurrentUnit.MILLIAMPS)) > 500) {
                 if (Math.abs(lastElbowPosition - elbow.getCurrentPosition()) < 1) {
                     loopsWithoutElbowMovement++;
                 } else {
                     loopsWithoutElbowMovement = 0;
+                    lastElbowPosition = elbow.getCurrentPosition();
                 }
             }
         }
@@ -251,10 +252,19 @@ public class TeleOp extends OpMode {
             elbow.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             elbow.setPower(0);
             elbowDisabled = true;
-            telemetry.addData("ELBOW DISABLED", "ELBOW DISABLED");
+            telemetry.addData("ELBOW", "ELBOW DISABLED");
+        }
+
+        if (gamepad2.square) {
+            elbowDisabled = false;
+            elbow.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            elbow.setPower(0);
+            telemetry.addData("ELBOW", "Elbow Enabled");
         }
 
         telemetry.addData("Current", elbow.getCurrent(CurrentUnit.MILLIAMPS));
+        telemetry.addData("LWEM", loopsWithoutElbowMovement);
+        telemetry.addData("Elbow Pos", elbow.getCurrentPosition());
     }
 
     /*
