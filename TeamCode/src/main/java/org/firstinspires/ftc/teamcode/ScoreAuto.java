@@ -162,7 +162,7 @@ public class ScoreAuto extends OpMode {
 
         viperSlide.setPower(-.6);
 
-        elbow.setTargetPosition(1000);
+        elbow.setTargetPosition(900);
         elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         elbow.setPower(0.4);
 
