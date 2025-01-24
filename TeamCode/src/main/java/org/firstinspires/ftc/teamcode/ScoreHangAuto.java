@@ -37,8 +37,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
-
 /*
  * This file contains an example of an iterative (Non-Linear) "OpMode".
  * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
@@ -53,8 +51,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Cyberhazards", group = "Iterative OpMode")
-public class TeleOp extends OpMode {
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Score + Hang", group = "Iterative OpMode")
+public class ScoreHangAuto extends OpMode {
     // Declare OpMode members.
 
     private DcMotor frontLeft = null;
@@ -71,13 +69,8 @@ public class TeleOp extends OpMode {
 
 
     private final int ELBOW_STRAIGHT_UP = 706;
+    private final int ELBOW_TOUCHING_BAR = 900;
     private final int ELBOW_STRAIGHT_OUT = 2090;
-    private final int ELBOW_PICKUP = 3078;
-    private final int ELBOW_BACK = 325;
-
-    private int lastElbowPosition = 0;
-    private int loopsWithoutElbowMovement = 0;
-    private boolean elbowDisabled = false;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -116,8 +109,7 @@ public class TeleOp extends OpMode {
 
         viperSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        if (!InitTracker.getInstance().didInit)
-            elbow.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        elbow.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         elbow.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -134,7 +126,8 @@ public class TeleOp extends OpMode {
 
         elbow.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, C);
 
-        lastElbowPosition = elbow.getCurrentPosition();
+        InitTracker.getInstance().didInit = true;
+
 
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
@@ -145,7 +138,6 @@ public class TeleOp extends OpMode {
      */
     @Override
     public void init_loop() {
-        telemetry.addData("encoder", elbow.getCurrentPosition());
     }
 
     /*
@@ -153,10 +145,76 @@ public class TeleOp extends OpMode {
      */
     @Override
     public void start() {
+        drive(0.5, 0, 0);
+        waitForMS(250);
+        stop();
+
+        drive(0, -.5, 0);
+        waitForMS(1100);
+        stop();
+
+        drive(0, 0, -.25);
+        waitForMS(600);
+        stop();
+
+        drive(0.5, 0, 0);
+        waitForMS(120);
+        stop();
+
+        viperSlide.setPower(-.6);
+
+        elbow.setTargetPosition(900);
+        elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        elbow.setPower(0.4);
+
+        wrist.setPosition(0.5);
+
+        waitForMS(3000);
+
+
+        roller.setPower(-.3);
+        roller2.setPower(.3);
+
+        waitForMS(1000);
+
+        viperSlide.setPower(0);
+
         elbow.setTargetPosition(ELBOW_STRAIGHT_UP);
         elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        elbow.setPower(0.75);
-        wrist.setPosition(0.5);
+        elbow.setPower(0.4);
+
+        roller.setPower(0);
+        roller2.setPower(0);
+
+        waitForMS(1000);
+
+        drive(0, 0, .25);
+        waitForMS(3200);
+        stop();
+
+        drive(-.25, 0, 0);
+        waitForMS(300);
+        stop();
+
+        drive(0, -.25, 0);
+        waitForMS(3750);
+        stop();
+
+        drive(0, -.15, .25);
+        waitForMS(1000);
+        stop();
+
+        elbow.setTargetPosition(ELBOW_TOUCHING_BAR);
+        elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        elbow.setPower(0.4);
+    }
+
+    private void waitForMS(int ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+
+        }
     }
 
     /*
@@ -164,123 +222,16 @@ public class TeleOp extends OpMode {
      */
     @Override
     public void loop() {
-        telemetry.addData("encoder", elbow.getCurrentPosition());
-        telemetry.addData("setpoint", elbow.getTargetPosition());
 
-        double x = gamepad1.left_stick_x;
-        double y = gamepad1.left_stick_y;
-        double z = gamepad1.right_stick_x;
+    }
 
-        if (gamepad1.right_bumper) {
-            x = x * 0.3;
-            y = y * 0.3;
-            z = z * 0.3;
-        }
-
-
+    private void drive(double x, double y, double z) {
         frontLeft.setPower(y - x - z);
         frontRight.setPower(y + x + z);
         backLeft.setPower(y + x - z);
         backRight.setPower(y - x + z);
 
-        if (gamepad2.left_bumper || gamepad2.right_bumper) {
-            roller.setPower(-.3);
-            roller2.setPower(.2);
-        } else if (gamepad2.left_trigger > .5 || gamepad2.right_trigger > .5) {
-            roller.setPower(1);
-            roller2.setPower(-1);
-        } else {
-            roller.setPower(0);
-            roller2.setPower(0);
-        }
 
-
-        if (gamepad2.dpad_up) {
-            wrist.setPosition(0.5);
-        }
-
-        if (gamepad2.dpad_left) {
-            wrist.setPosition(0.75);
-        }
-
-        if (gamepad2.dpad_right) {
-            wrist.setPosition(0.25);
-        }
-
-//        if(gamepad2.right_trigger > 0.2) {
-//            viperSlide.setTargetPosition(0);
-//
-//        }
-//
-//        if(gamepad2.left_trigger > 0.2) {
-//            viperSlide.setTargetPosition(0);
-//
-//        }
-//
-//        if(gamepad2.right_stick_y > 0) {
-//            viperSlide.setTargetPosition(0);
-//        }
-
-        viperSlide.setPower(gamepad2.left_stick_y);
-        // elbow.setPower(gamepad2.left_stick_y);
-
-        if (!elbowDisabled) {
-            if (gamepad2.circle) {
-                elbow.setTargetPosition(ELBOW_STRAIGHT_OUT);
-                elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                elbow.setPower(0.75);
-            }
-
-            if (gamepad2.triangle) {
-                elbow.setTargetPosition(ELBOW_STRAIGHT_UP);
-                elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                elbow.setPower(0.75);
-            }
-
-            if (gamepad2.cross) {
-                elbow.setTargetPosition(ELBOW_PICKUP);
-                elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                elbow.setPower(0.75);
-            }
-
-            if (gamepad2.square) {
-                elbow.setTargetPosition(ELBOW_BACK);
-                elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                elbow.setPower(0.75);
-            }
-
-            if (Math.abs(gamepad2.right_stick_y) > 0.25) {
-                elbow.setTargetPosition(elbow.getTargetPosition() + 5 * Math.round(Math.signum(gamepad2.right_stick_y)));
-            }
-
-            if (Math.abs(elbow.getCurrent(CurrentUnit.MILLIAMPS)) > 500 && 1 == 2) {
-                if (Math.abs(lastElbowPosition - elbow.getCurrentPosition()) < 1) {
-                    loopsWithoutElbowMovement++;
-                } else {
-                    loopsWithoutElbowMovement = 0;
-                    lastElbowPosition = elbow.getCurrentPosition();
-                }
-            }
-        }
-
-        if (loopsWithoutElbowMovement > 20) {
-            elbow.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            elbow.setPower(0);
-            elbowDisabled = true;
-            telemetry.addData("ELBOW", "ELBOW DISABLED");
-        }
-
-//        if (gamepad2.square) {
-//            elbowDisabled = false;
-//            loopsWithoutElbowMovement = 0;
-//            elbow.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//            elbow.setPower(0);
-//            telemetry.addData("ELBOW", "Elbow Enabled");
-//        }
-
-        telemetry.addData("Current", elbow.getCurrent(CurrentUnit.MILLIAMPS));
-        telemetry.addData("LWEM", loopsWithoutElbowMovement);
-        telemetry.addData("Elbow Pos", elbow.getCurrentPosition());
     }
 
     /*
@@ -292,7 +243,6 @@ public class TeleOp extends OpMode {
         frontRight.setPower(0);
         backLeft.setPower(0);
         backRight.setPower(0);
-        viperSlide.setPower(0);
     }
 
 }
