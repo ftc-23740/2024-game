@@ -37,6 +37,8 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+
 /*
  * This file contains an example of an iterative (Non-Linear) "OpMode".
  * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
@@ -51,8 +53,8 @@ import com.qualcomm.robotcore.hardware.ServoImplEx;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Score + Hang", group = "Iterative OpMode")
-public class ScoreHangAuto extends OpMode {
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Wheel Test", group = "Test OpMode")
+public class WheelTest extends OpMode {
     // Declare OpMode members.
 
     private DcMotor frontLeft = null;
@@ -68,11 +70,14 @@ public class ScoreHangAuto extends OpMode {
     private ServoImplEx wrist = null;
 
 
-    private final int ELBOW_STRAIGHT_UP = 715;
-    private final int ELBOW_TOUCHING_BAR = 900;
+    private final int ELBOW_STRAIGHT_UP = 706;
     private final int ELBOW_STRAIGHT_OUT = 2090;
+    private final int ELBOW_PICKUP = 3078;
+    private final int ELBOW_BACK = 325;
 
-    private boolean KILL = false;
+    private int lastElbowPosition = 0;
+    private int loopsWithoutElbowMovement = 0;
+    private boolean elbowDisabled = false;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -111,7 +116,8 @@ public class ScoreHangAuto extends OpMode {
 
         viperSlide.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        elbow.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        if (!InitTracker.getInstance().didInit)
+            elbow.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         elbow.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -128,8 +134,7 @@ public class ScoreHangAuto extends OpMode {
 
         elbow.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, C);
 
-        InitTracker.getInstance().didInit = true;
-
+        lastElbowPosition = elbow.getCurrentPosition();
 
         // Tell the driver that initialization is complete.
         telemetry.addData("Status", "Initialized");
@@ -140,6 +145,7 @@ public class ScoreHangAuto extends OpMode {
      */
     @Override
     public void init_loop() {
+        telemetry.addData("encoder", elbow.getCurrentPosition());
     }
 
     /*
@@ -147,76 +153,7 @@ public class ScoreHangAuto extends OpMode {
      */
     @Override
     public void start() {
-        drive(0.5, 0, 0);
-        waitForMS(400);
-        stop_motors();
 
-        drive(0, -.5, 0);
-        waitForMS(1200);
-        stop_motors();
-
-        drive(0, 0, -.25);
-        waitForMS(600);
-        stop_motors();
-
-        drive(0.5, 0, 0);
-        waitForMS(140);
-        stop_motors();
-
-        viperSlide.setPower(-.6);
-
-        elbow.setTargetPosition(900);
-        elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        elbow.setPower(0.4);
-
-        wrist.setPosition(0.5);
-
-        waitForMS(3000);
-
-
-        roller.setPower(-.3);
-        roller2.setPower(.3);
-
-        waitForMS(1000);
-
-        viperSlide.setPower(0);
-
-        elbow.setTargetPosition(ELBOW_STRAIGHT_UP);
-        elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        elbow.setPower(0.4);
-
-        roller.setPower(0);
-        roller2.setPower(0);
-
-        waitForMS(1000);
-
-        drive(0, 0, .25);
-        waitForMS(3200);
-        stop_motors();
-
-        drive(-.25, 0, 0);
-        waitForMS(300);
-        stop_motors();
-
-        drive(0, -.4, 0);
-        waitForMS(3750);
-        stop_motors();
-
-        drive(0, -.15, .25);
-        waitForMS(1000);
-        stop_motors();
-
-        elbow.setTargetPosition(ELBOW_TOUCHING_BAR);
-        elbow.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        elbow.setPower(0.4);
-    }
-
-    private void waitForMS(int ms) {
-        long start = System.currentTimeMillis();
-
-        while (System.currentTimeMillis() < start + ms) {
-            if (KILL) break;
-        }
     }
 
     /*
@@ -224,34 +161,42 @@ public class ScoreHangAuto extends OpMode {
      */
     @Override
     public void loop() {
+        if (gamepad1.x) {
+            frontLeft.setPower(1);
+        } else {
+            frontLeft.setPower(0);
+        }
 
-    }
-
-    private void drive(double x, double y, double z) {
-        frontLeft.setPower(y - x - z);
-        frontRight.setPower(y + x + z);
-        backLeft.setPower(y + x - z);
-        backRight.setPower(y - x + z);
-
-
+        if (gamepad1.y) {
+            frontRight.setPower(1);
+        }
+        else{
+            frontRight.setPower(0);
+        }
+        if (gamepad1.b) {
+            backRight.setPower(1);
+        }
+        else {
+            backRight.setPower(0);
+        }
+        if (gamepad1.a) {
+            backLeft.setPower(1);
+        }
+        else{
+            backLeft.setPower(0);
+        }
     }
 
     /*
      * Code to run ONCE after the driver hits STOP
      */
-    public void stop_motors() {
+    @Override
+    public void stop() {
         frontLeft.setPower(0);
         frontRight.setPower(0);
         backLeft.setPower(0);
         backRight.setPower(0);
+        viperSlide.setPower(0);
     }
 
-    @Override
-    public void stop() {
-        super.stop();
-
-        stop_motors();
-
-        KILL = true;
-    }
 }
